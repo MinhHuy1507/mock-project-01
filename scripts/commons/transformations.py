@@ -41,14 +41,14 @@ def split_customers_address(context, transform_rules):
         split_series = df[source].apply(
             lambda x: x.split(",", 1) if isinstance(x, str) and x.strip() else None
         )
-        
+
         first_values = [
-            x[0].strip() if isinstance(x, list) and len(x) > 0 else None 
+            x[0].strip() if isinstance(x, list) and len(x) > 0 else None
             for x in split_series
         ]
-        
+
         second_values = [
-            x[1].strip() if isinstance(x, list) and len(x) > 1 else None 
+            x[1].strip() if isinstance(x, list) and len(x) > 1 else None
             for x in split_series
         ]
 

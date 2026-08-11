@@ -6,15 +6,23 @@ import pandas as pd
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from scripts.commons.transformations import split_customers_name, split_customers_address, rename_columns, add_columns
+from scripts.commons.transformations import (
+    split_customers_name,
+    split_customers_address,
+    rename_columns,
+    add_columns,
+)
+
 
 # Before these transformations, i do validate and just transform valid records. No need to worry about None. But still test
 class TransformationsTest(unittest.TestCase):
     def test_split_customers_name(self):
-        df = pd.DataFrame({"name": ["Huy Ngo", None, "Huy", "Huy Ngo Minh", " Huy Ngo Minh"]})
+        df = pd.DataFrame(
+            {"name": ["Huy Ngo", None, "Huy", "Huy Ngo Minh", " Huy Ngo Minh"]}
+        )
         config = [{"from": "name", "to": ["first_name", "last_name"]}]
         context = {"df": df}
-        
+
         split_customers_name(context, config)
 
         self.assertEqual(df.loc[0, "first_name"], "Huy")
@@ -33,7 +41,16 @@ class TransformationsTest(unittest.TestCase):
         self.assertEqual(df.loc[4, "last_name"], "Ngo Minh")
 
     def test_split_customers_address(self):
-        df = pd.DataFrame({"address": [None, "123 Nguyen Ai Quoc, Ho Chi Minh", "123 Nguyen Ai Quoc", " 123 Nguyen Ai Quoc, Ho Chi Minh"]})
+        df = pd.DataFrame(
+            {
+                "address": [
+                    None,
+                    "123 Nguyen Ai Quoc, Ho Chi Minh",
+                    "123 Nguyen Ai Quoc",
+                    " 123 Nguyen Ai Quoc, Ho Chi Minh",
+                ]
+            }
+        )
         config = [{"from": "address", "to": ["address", "address_province"]}]
         context = {"df": df}
 
@@ -79,6 +96,7 @@ class TransformationsTest(unittest.TestCase):
         self.assertEqual(df["source_file"].tolist(), ["test_path.csv", "test_path.csv"])
         self.assertEqual(len(df["process_date"].unique()), 1)
         self.assertFalse(pd.isna(df.loc[0, "process_date"]))
+
 
 if __name__ == "__main__":
     unittest.main()

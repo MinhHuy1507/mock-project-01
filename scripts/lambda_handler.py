@@ -60,7 +60,7 @@ def l0_to_l1(table, date_path):
         "layer": "l0_to_l1",
         "config": config,
     }
-    
+
     context["df"] = utils.read_csv(path_l0)
 
     valid_records, error_records = validations.validate_l0_to_l1(context["df"], config)

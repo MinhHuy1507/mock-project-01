@@ -5,7 +5,7 @@ import yaml
 
 def make_dirs(path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    
+
 
 def read_csv(path):
     return pd.read_csv(path)

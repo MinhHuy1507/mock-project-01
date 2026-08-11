@@ -3,3 +3,4 @@ pyyaml
 pyarrow
 pytest
 faker
+black
