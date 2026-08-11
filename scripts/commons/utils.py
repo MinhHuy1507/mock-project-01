@@ -3,17 +3,21 @@ import os
 import yaml
 
 
+def make_dirs(path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    
+
 def read_csv(path):
     return pd.read_csv(path)
 
 
 def write_csv(df, path):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    make_dirs(path)
     df.to_csv(path, index=False, header=True)
 
 
 def write_parquet(df, path):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    make_dirs(path)
     df.to_parquet(path, index=False, engine="pyarrow")
 
 
