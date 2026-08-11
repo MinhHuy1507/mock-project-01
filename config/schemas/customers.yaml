@@ -1,0 +1,53 @@
+table_name: customers
+prefix: customers/
+suffix: .csv
+load_strategy: upsert
+
+columns:
+- name: id
+  type: string
+- name: name
+  type: string
+- name: birthday
+  type: date
+- name: address
+  type: string
+- name: kpi
+  type: decimal
+
+rcv_to_l0:
+  validation:
+    validate_file: true
+    validate_schema: true
+
+  transformation:
+    add_column:
+      - name: process_date
+        type: datetime
+      - name: source_file
+        type: string
+    
+l0_to_l1:
+  validation:
+    - rule: not_null
+      column: [id, name, birthday, address, kpi]
+    - rule: format
+      column: birthday
+      format: yyyy-MM-dd
+    - rule: range
+      column: kpi
+      min: 0
+      max: 100
+    - rule: unique
+      column: id
+
+  transformation:
+    split_name:
+      - from: name
+        to: [first_name, last_name]
+    split_address:
+      - from: address
+        to: [address, address_province]
+    rename:
+      - from: id
+        to: customer_id 

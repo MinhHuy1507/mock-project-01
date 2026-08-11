@@ -1,0 +1,34 @@
+table_name: province
+prefix: province/
+suffix: .csv
+load_strategy: upsert
+
+columns:
+- name: id
+  type: string
+- name: name
+  type: string
+
+rcv_to_l0:
+  validation:
+    validate_file: true
+    validate_schema: true
+
+  transformation:
+    add_column:
+      - name: process_date
+        type: datetime
+      - name: source_file
+        type: string
+    
+l0_to_l1:
+  validation:
+    - rule: not_null
+      column: [id, name]
+
+  transformation:
+    rename:
+      - from: id
+        to: province_id
+      - from: name
+        to: province_name

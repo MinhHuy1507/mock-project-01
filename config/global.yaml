@@ -1,0 +1,6 @@
+path:
+  rcv: ../data/rcv/
+  l0: ../data/l0/
+  l1: ../data/l1/
+  job_tracking: ../data/audit/jobtracking/
+  error_records: ../data/audit/error_records/

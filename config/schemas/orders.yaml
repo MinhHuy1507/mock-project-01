@@ -1,0 +1,52 @@
+table_name: orders
+prefix: orders/
+suffix: .csv
+load_strategy: upsert
+
+columns:
+- name: id
+  type: string
+- name: customer_id
+  type: string
+- name: product_id
+  type: string
+- name: quantity
+  type: int
+- name: price
+  type: decimal
+- name: order_date
+  type: datetime
+
+rcv_to_l0:
+  validation:
+    validate_file: true
+    validate_schema: true
+
+  transformation:
+    add_column:
+      - name: process_date
+        type: datetime
+      - name: source_file
+        type: string
+    
+l0_to_l1:
+  validation:
+    - rule: not_null
+      column: [id, customer_id, product_id, quantity, price, order_date]
+    - rule: range
+      column: quantity
+      min: 0
+      max: 9999
+    - rule: range
+      column: price
+      min: 0
+      max: 9999999
+    - rule: unique
+      column: id
+    - rule: unique
+      column: [customer_id, product_id] 
+
+  transformation:
+    rename:
+      - from: id
+        to: order_id 

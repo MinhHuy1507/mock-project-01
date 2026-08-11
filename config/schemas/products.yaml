@@ -1,0 +1,43 @@
+table_name: products
+prefix: products/
+suffix: .csv
+load_strategy: truncate_and_insert
+
+columns:
+- name: id
+  type: string
+- name: name
+  type: string
+- name: unit_price
+  type: decimal
+
+rcv_to_l0:
+  validation:
+    validate_file: true
+    validate_schema: true
+
+  transformation:
+    add_column:
+      - name: process_date
+        type: datetime
+      - name: source_file
+        type: string
+    
+l0_to_l1:
+  validation:
+    - rule: not_null
+      column: [id, name, unit_price]
+    - rule: range
+      column: unit_price
+      min: 0
+      max: 9999999
+    - rule: unique
+      column: id
+
+  transformation:
+    rename:
+      - from: id
+        to: product_id
+      - from: name
+        to: product_name
+ 
