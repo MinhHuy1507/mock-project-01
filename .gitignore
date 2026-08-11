@@ -17,7 +17,7 @@ dist/
 *.egg-info/
 
 data/*
-!data/rcv/
+!data/.gitkeep
 
 note/
 temp/
