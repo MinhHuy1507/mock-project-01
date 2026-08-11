@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import pandas as pd
+
 
 def transform(df, config, layer):
     if df.empty:
@@ -42,12 +44,16 @@ def split_customers_name(df, config):
         split_series = df[source].apply(
             lambda x: x.split() if isinstance(x, str) and x.strip() else None
         )
-        df[first_col] = split_series.apply(
-            lambda x: x[0] if isinstance(x, list) and len(x) > 0 else None
-        )
-        df[last_col] = split_series.apply(
-            lambda x: " ".join(x[1:]) if isinstance(x, list) and len(x) > 1 else None
-        )
+        first_values = [
+            x[0] if isinstance(x, list) and len(x) > 0 else None for x in split_series
+        ]
+        last_values = [
+            " ".join(x[1:]) if isinstance(x, list) and len(x) > 1 else None
+            for x in split_series
+        ]
+
+        df[first_col] = pd.Series(first_values, index=df.index, dtype=object)
+        df[last_col] = pd.Series(last_values, index=df.index, dtype=object)
 
 
 def rename_columns(df, config):
