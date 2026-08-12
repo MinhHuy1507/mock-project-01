@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pandas as pd
+import numpy as np
 
 
 def transform(context):
@@ -38,22 +39,12 @@ def split_customers_address(context, transform_rules):
         source = rule["from"]
         first_col, second_col = rule["to"]
 
-        split_series = df[source].apply(
-            lambda x: x.split(",", 1) if isinstance(x, str) and x.strip() else None
-        )
+        cleaned_source = df[source].str.strip(" ,").replace("", None)
 
-        first_values = [
-            x[0].strip() if isinstance(x, list) and len(x) > 0 else None
-            for x in split_series
-        ]
+        splits = cleaned_source.str.rsplit(",", n=1)
 
-        second_values = [
-            x[1].strip() if isinstance(x, list) and len(x) > 1 else None
-            for x in split_series
-        ]
-
-        df[first_col] = pd.Series(first_values, index=df.index, dtype=object)
-        df[second_col] = pd.Series(second_values, index=df.index, dtype=object)
+        df[first_col] = cleaned_source.replace({np.nan: None})
+        df[second_col] = splits.str[1].str.strip().replace({np.nan: None})
 
 
 def split_customers_name(context, transform_rules):
@@ -63,19 +54,10 @@ def split_customers_name(context, transform_rules):
         source = rule["from"]
         first_col, last_col = rule["to"]
 
-        split_series = df[source].apply(
-            lambda x: x.split() if isinstance(x, str) and x.strip() else None
-        )
-        first_values = [
-            x[0] if isinstance(x, list) and len(x) > 0 else None for x in split_series
-        ]
-        last_values = [
-            " ".join(x[1:]) if isinstance(x, list) and len(x) > 1 else None
-            for x in split_series
-        ]
+        splits = df[source].str.split(n=1).replace("", None)
 
-        df[first_col] = pd.Series(first_values, index=df.index, dtype=object)
-        df[last_col] = pd.Series(last_values, index=df.index, dtype=object)
+        df[first_col] = splits.str[0].replace({np.nan: None})
+        df[last_col] = splits.str[1].replace({np.nan: None})
 
 
 def rename_columns(context, transform_rules):

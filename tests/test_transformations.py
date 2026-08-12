@@ -48,6 +48,8 @@ class TransformationsTest(unittest.TestCase):
                     "123 Nguyen Ai Quoc, Ho Chi Minh",
                     "123 Nguyen Ai Quoc",
                     " 123 Nguyen Ai Quoc, Ho Chi Minh",
+                    ",123 Nguyen Ai Quoc, Ho Chi Minh",
+                    ",123 Nguyen Ai Quoc, Ho Chi Minh,",
                 ]
             }
         )
@@ -59,14 +61,20 @@ class TransformationsTest(unittest.TestCase):
         self.assertIsNone(df.loc[0, "address"])
         self.assertIsNone(df.loc[0, "address_province"])
 
-        self.assertEqual(df.loc[1, "address"], "123 Nguyen Ai Quoc")
+        self.assertEqual(df.loc[1, "address"], "123 Nguyen Ai Quoc, Ho Chi Minh")
         self.assertEqual(df.loc[1, "address_province"], "Ho Chi Minh")
 
         self.assertEqual(df.loc[2, "address"], "123 Nguyen Ai Quoc")
         self.assertIsNone(df.loc[2, "address_province"])
 
-        self.assertEqual(df.loc[3, "address"], "123 Nguyen Ai Quoc")
+        self.assertEqual(df.loc[3, "address"], "123 Nguyen Ai Quoc, Ho Chi Minh")
         self.assertEqual(df.loc[3, "address_province"], "Ho Chi Minh")
+
+        self.assertEqual(df.loc[4, "address"], "123 Nguyen Ai Quoc, Ho Chi Minh")
+        self.assertEqual(df.loc[4, "address_province"], "Ho Chi Minh")
+
+        self.assertEqual(df.loc[5, "address"], "123 Nguyen Ai Quoc, Ho Chi Minh")
+        self.assertEqual(df.loc[5, "address_province"], "Ho Chi Minh")
 
     def test_rename_columns(self):
         df = pd.DataFrame({"id": [None, "CUST_001"], "other_col": [1, 2]})

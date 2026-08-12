@@ -19,12 +19,17 @@ def validate_file(context):
         raise ValidationError(
             f"Invalid file format {file_path}. Expected file format {suffix}"
         )
+    if os.path.getsize(file_path) == 0:
+        raise ValidationError(f"File empty: {file_path}")
+
     try:
         context["df"] = pd.read_csv(file_path)
-        if context["df"].empty:
-            raise ValidationError(f"File empty: {file_path}")
     except Exception as e:
         raise ValidationError(f"File is not readable: {str(e)}")
+
+    # If file contains only header, no data
+    if context["df"].empty:
+        raise ValidationError(f"File empty: {file_path}")
 
 
 def validate_schema(context):
@@ -55,27 +60,24 @@ def validate_rcv_to_l0(context):
 
 # L0 to L1
 def validate_not_null(df, column):
-    if isinstance(column, list):
-        mask = df[column].notna().all(axis=1)
-    else:
-        mask = df[column].notna()
+    mask = df[column].notna()
     return mask
 
 
 def validate_unique(df, column):
-    mask = ~df[column].duplicated()
+    mask = ~df[column].duplicated(keep=False) | df[column].isna()
     return mask
 
 
 def validate_format(df, column, format):
     python_format = format.replace("yyyy", "%Y").replace("MM", "%m").replace("dd", "%d")
     parsed = pd.to_datetime(df[column], format=python_format, errors="coerce")
-    mask = parsed.notna()
+    mask = parsed.notna() | df[column].isna()
     return mask
 
 
 def validate_range(df, column, min, max):
-    mask = (df[column] >= min) & (df[column] <= max)
+    mask = ((df[column] >= min) & (df[column] <= max)) | df[column].isna()
     return mask
 
 
@@ -147,9 +149,6 @@ def validate_l0_to_l1(df, config):
                 single_col_params = params.copy()
                 single_col_params["column"] = col
                 mask = function(df, **single_col_params)
-
-                if rule != "not_null":
-                    mask = mask | df[col].isna()
 
                 failed_idx = df.index[~mask]
                 for idx in failed_idx:
