@@ -1,64 +1,70 @@
 from datetime import datetime
 
 import pandas as pd
+import numpy as np
 
 
-def transform(df, config, layer):
+def transform(context):
+    df = context["df"]
+    layer = context["layer"]
+    config = context["config"]
+
     if df.empty:
         return df
 
     transformations = config[layer]["transformation"]
-    for transform_name, config in transformations.items():
+    for transform_name, transform_rules in transformations.items():
         function = TRANSFORM_FUNCTIONS[transform_name]
-        function(df, config)
+        function(context, transform_rules)
 
     return df
 
 
 # rcv_to_l0
-COLUMNS = {"process_date": datetime.now(), "source_file": "temp"}
+def add_columns(context, transform_rules):
+    df = context["df"]
+    path = context["file_path"]
 
-
-def add_columns(df, config):
-    for column in config:
+    COLUMNS = {"process_date": datetime.now(), "source_file": path}
+    for column in transform_rules:
         df[column["name"]] = COLUMNS[column["name"]]
 
 
 # l0_to_l1
 ## customers
-def split_customers_address(df, config):
-    for rule in config:
+def split_customers_address(context, transform_rules):
+    df = context["df"]
+
+    for rule in transform_rules:
         source = rule["from"]
-        targets = rule["to"]
+        first_col, second_col = rule["to"]
 
-        result = df[source].str.split(",", n=1, expand=True)
+        cleaned_source = df[source].str.strip(" ,").replace("", None)
 
-        df[targets] = result
+        splits = cleaned_source.str.rsplit(",", n=1)
+
+        df[first_col] = cleaned_source.replace({np.nan: None})
+        df[second_col] = splits.str[1].str.strip().replace({np.nan: None})
 
 
-def split_customers_name(df, config):
-    for rule in config:
+def split_customers_name(context, transform_rules):
+    df = context["df"]
+
+    for rule in transform_rules:
         source = rule["from"]
         first_col, last_col = rule["to"]
 
-        split_series = df[source].apply(
-            lambda x: x.split() if isinstance(x, str) and x.strip() else None
-        )
-        first_values = [
-            x[0] if isinstance(x, list) and len(x) > 0 else None for x in split_series
-        ]
-        last_values = [
-            " ".join(x[1:]) if isinstance(x, list) and len(x) > 1 else None
-            for x in split_series
-        ]
+        splits = df[source].str.split(n=1).replace("", None)
 
-        df[first_col] = pd.Series(first_values, index=df.index, dtype=object)
-        df[last_col] = pd.Series(last_values, index=df.index, dtype=object)
+        df[first_col] = splits.str[0].replace({np.nan: None})
+        df[last_col] = splits.str[1].replace({np.nan: None})
 
 
-def rename_columns(df, config):
+def rename_columns(context, transform_rules):
+    df = context["df"]
+
     mapping = {}
-    for rule in config:
+    for rule in transform_rules:
         mapping[rule["from"]] = rule["to"]
 
     df.rename(columns=mapping, inplace=True)

@@ -35,7 +35,7 @@ def rcv_to_l0(table, date_path):
     }
 
     validations.validate_rcv_to_l0(context)
-    context["df"] = transformations.transform(context["df"], config, "rcv_to_l0")
+    context["df"] = transformations.transform(context)
 
     utils.write_csv(context["df"], path_l0)
 
@@ -54,10 +54,17 @@ def l0_to_l1(table, date_path):
         + date_path
         + f"/error_{table}.csv"
     )
-    df = utils.read_csv(path_l0)
 
-    valid_records, error_records = validations.validate_l0_to_l1(df, config)
-    valid_records = transformations.transform(valid_records, config, "l0_to_l1")
+    context = {
+        "df": None,
+        "layer": "l0_to_l1",
+        "config": config,
+    }
+
+    context["df"] = utils.read_csv(path_l0)
+
+    valid_records, error_records = validations.validate_l0_to_l1(context["df"], config)
+    valid_records = transformations.transform(context)
 
     print("=== Error records")
     print(error_records)
