@@ -3,12 +3,20 @@ import os
 import yaml
 import boto3
 
+
 def make_dirs(path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
 
 def read_csv(path):
     return pd.read_csv(path)
+
+
+def read_parquet(path):
+    try:
+        return pd.read_parquet(path)
+    except Exception as e:
+        raise str(e)
 
 
 def write_csv(df, path):

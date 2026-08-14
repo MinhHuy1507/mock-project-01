@@ -65,7 +65,14 @@ def validate_not_null(df, column):
 
 
 def validate_unique(df, column):
-    mask = ~df[column].duplicated(keep=False) | df[column].isna()
+    is_duplicated = df.duplicated(subset=column, keep=False)
+
+    if isinstance(column, list):
+        is_na = df[column].isna().any(axis=1)
+    else:
+        is_na = df[column].isna()
+
+    mask = ~is_duplicated | is_na
     return mask
 
 
