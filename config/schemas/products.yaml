@@ -1,7 +1,7 @@
 table_name: products
+schema_name: retail
 prefix: products/
 suffix: .csv
-load_strategy: truncate_and_insert
 
 columns:
 - name: id
@@ -40,4 +40,9 @@ l0_to_l1:
         to: product_id
       - from: name
         to: product_name
- 
+    filter_columns:
+      - output: [product_id, product_name, unit_price, process_date, source_file]
+
+load_database:
+  load_strategy: truncate_and_insert
+  primary_key: customer_id

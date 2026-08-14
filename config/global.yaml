@@ -1,6 +1,14 @@
 path:
-  rcv: ../data/rcv/
-  l0: ../data/l0/
-  l1: ../data/l1/
-  job_tracking: ../data/audit/jobtracking/
-  error_records: ../data/audit/error_records/
+  rcv: /opt/airflow/data/rcv/
+  l0: /opt/airflow/data/l0/
+  l1: /opt/airflow/data/l1/
+  job_tracking: /opt/airflow/data/audit/jobtracking/
+  error_records: /opt/airflow/data/audit/error_records/
+
+# Temporary: Sau này deploy lên AWS sẽ dùng secret managers
+postgres:
+  username: airflow
+  password: airflow
+  host: postgres
+  database: airflow
+  port: 5432

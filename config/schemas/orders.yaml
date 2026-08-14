@@ -1,7 +1,7 @@
 table_name: orders
+schema_name: retail
 prefix: orders/
 suffix: .csv
-load_strategy: upsert
 
 columns:
 - name: id
@@ -50,3 +50,9 @@ l0_to_l1:
     rename:
       - from: id
         to: order_id 
+    filter_columns:
+      - output: [order_id, customer_id, product_id, quantity, price, order_date, process_date, source_file]
+
+load_database:
+  load_strategy: append_only
+  primary_key: order_id
