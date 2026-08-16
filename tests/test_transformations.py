@@ -81,15 +81,15 @@ class TransformationsTest(unittest.TestCase):
         config = [{"from": "id", "to": "customer_id"}]
         context = {"df": df}
 
-        rename_columns(context, config)
+        result_df = rename_columns(context, config)
 
-        self.assertIn("customer_id", df.columns)
-        self.assertNotIn("id", df.columns)
-        self.assertIn("other_col", df.columns)
+        self.assertIn("customer_id", result_df.columns)
+        self.assertNotIn("id", result_df.columns)
+        self.assertIn("other_col", result_df.columns)
 
-        self.assertTrue(pd.isna(df.loc[0, "customer_id"]))
-        self.assertEqual(df.loc[1, "customer_id"], "CUST_001")
-        self.assertEqual(df.loc[1, "other_col"], 2)
+        self.assertTrue(pd.isna(result_df.loc[0, "customer_id"]))
+        self.assertEqual(result_df.loc[1, "customer_id"], "CUST_001")
+        self.assertEqual(result_df.loc[1, "other_col"], 2)
 
     def test_add_columns(self):
         df = pd.DataFrame({"customer_id": ["CUST_001", "CUST_002"]})

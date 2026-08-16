@@ -15,9 +15,9 @@ def transform(context):
     transformations = config[layer]["transformation"]
     for transform_name, transform_rules in transformations.items():
         function = TRANSFORM_FUNCTIONS[transform_name]
-        function(context, transform_rules)
+        context["df"] = function(context, transform_rules)
 
-    return df
+    return context["df"]
 
 
 # rcv_to_l0
@@ -28,6 +28,8 @@ def add_columns(context, transform_rules):
     COLUMNS = {"process_date": datetime.now(), "source_file": path}
     for column in transform_rules:
         df[column["name"]] = COLUMNS[column["name"]]
+
+    return df
 
 
 # l0_to_l1
@@ -46,6 +48,8 @@ def split_customers_address(context, transform_rules):
         df[first_col] = cleaned_source.replace({np.nan: None})
         df[second_col] = splits.str[1].str.strip().replace({np.nan: None})
 
+    return df
+
 
 def split_customers_name(context, transform_rules):
     df = context["df"]
@@ -59,6 +63,8 @@ def split_customers_name(context, transform_rules):
         df[first_col] = splits.str[0].replace({np.nan: None})
         df[last_col] = splits.str[1].replace({np.nan: None})
 
+    return df
+
 
 def rename_columns(context, transform_rules):
     df = context["df"]
@@ -67,7 +73,19 @@ def rename_columns(context, transform_rules):
     for rule in transform_rules:
         mapping[rule["from"]] = rule["to"]
 
-    df.rename(columns=mapping, inplace=True)
+    df = df.rename(columns=mapping)
+    return df
+
+
+def filter_columns(context, transform_rules):
+    df = context["df"]
+
+    print("CÁC CỘT HIỆN TẠI LÀ:", df.columns.tolist())
+    for rule in transform_rules:
+        output_columns = rule["output"]
+        df = df[output_columns]
+
+    return df
 
 
 TRANSFORM_FUNCTIONS = {
@@ -75,4 +93,5 @@ TRANSFORM_FUNCTIONS = {
     "split_name": split_customers_name,
     "split_address": split_customers_address,
     "rename": rename_columns,
+    "filter_columns": filter_columns,
 }

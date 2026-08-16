@@ -1,7 +1,7 @@
 table_name: customers
+schema_name: retail
 prefix: customers/
 suffix: .csv
-load_strategy: upsert
 
 columns:
 - name: id
@@ -51,3 +51,9 @@ l0_to_l1:
     rename:
       - from: id
         to: customer_id 
+    filter_columns:
+      - output: [customer_id, first_name, last_name, birthday, address, address_province, kpi, process_date, source_file]
+
+load_database:
+  load_strategy: upsert
+  primary_key: customer_id

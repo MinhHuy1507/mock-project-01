@@ -1,7 +1,7 @@
 table_name: province
+schema_name: retail
 prefix: province/
 suffix: .csv
-load_strategy: upsert
 
 columns:
 - name: id
@@ -32,3 +32,9 @@ l0_to_l1:
         to: province_id
       - from: name
         to: province_name
+    filter_columns:
+      - output: [province_id, province_name, process_date, source_file]
+
+load_database:
+  load_strategy: truncate_and_insert
+  primary_key: customer_id
