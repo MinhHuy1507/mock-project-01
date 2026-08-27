@@ -6,7 +6,7 @@ import pandas as pd
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from scripts.commons.transformations import (
+from src.local.pandas.commons.transformations import (
     split_customers_name,
     split_customers_address,
     rename_columns,

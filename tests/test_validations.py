@@ -8,7 +8,7 @@ import numpy as np
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from scripts.commons.validations import (
+from src.local.pandas.commons.validations import (
     ValidationError,
     validate_file,
     validate_schema,
