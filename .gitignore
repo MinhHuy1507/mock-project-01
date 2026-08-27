@@ -28,3 +28,10 @@ logs/
 
 lambda/
 artifacts/
+
+*pem
+note*
+*secret*
+*.bat
+*.sh
+*.zip
