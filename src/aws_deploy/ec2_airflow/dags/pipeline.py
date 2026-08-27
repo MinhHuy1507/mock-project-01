@@ -1,0 +1,108 @@
+from datetime import datetime, timedelta
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from airflow.providers.amazon.aws.operators.glue import GlueJobOperator
+from airflow.models.param import Param
+
+from scripts.utils.track_job import (
+    init_tracking_record,
+    job_failure_callback,
+    job_success_callback,
+)
+
+default_args = {
+    "owner": "airflow",
+    # "retries": 3,
+    # "retry_delay": timedelta(minutes=5),
+    "depends_on_past": False,
+    "catch_up": False,
+}
+
+with DAG(
+    dag_id="trigger_glue_with_params",
+    default_args=default_args,
+    catchup=False,
+    start_date=datetime(2026, 1, 1),
+    schedule=None,
+    params={
+        "bucket_name": Param(
+            default="huynm43-mock-project-s3-414061810527-us-east-1-an",
+            type="string",
+            description="S3 bucket name containing the data.",
+        ),
+        "schema_name": Param(
+            default="retail",
+            type="string",
+            description="Schema name for the tables. Default is 'retail'.",
+        ),
+        "table_name": Param(
+            default="customers",
+            type="string",
+            enum=["customers", "products", "orders", "province"],
+            description="Table name to process. Options: customers, products, orders, province. Default is customers.",
+        ),
+        "process_date": Param(
+            default=datetime.now().strftime("%Y/%m/%d"),
+            type="string",
+            description="Custom date for processing in format YYYY/MM/DD. Default is today's date.",
+        ),
+        "region_name": Param(
+            default="us-east-1",
+            type="string",
+            description="AWS region name. Default is us-east-1.",
+        ),
+        "dynamo_table_name": Param(
+            default="huynm43-mp-dynamo",
+            type="string",
+            description="DynamoDB table name for tracking job status.",
+        ),
+        "sns_topic_arn": Param(
+            default="arn:aws:sns:us-east-1:414061810527:huynm43-mp-sns",
+            type="string",
+            description="SNS topic ARN for publishing job failure notifications.",
+        ),
+    },
+) as dag:
+    bucket_name = "{{ params.bucket_name }}"
+    table_name = "{{ params.table_name }}"
+    schema_name = "{{ params.schema_name }}"
+    process_date = "{{ params.process_date }}"
+    dynamo_table_name = "{{ params.dynamo_table_name }}"
+    region_name = "{{ params.region_name }}"
+    sns_topic_arn = "{{ params.sns_topic_arn }}"
+
+    init_dynamo_tracking = PythonOperator(
+        task_id="init_dynamo_tracking",
+        python_callable=init_tracking_record,
+        op_kwargs={
+            "params": {
+                "dag_id": dag.dag_id,
+                "run_id": "{{ run_id }}",
+                "task_id": "init_dynamo_tracking",
+                "schema_name": schema_name,
+                "table_name": table_name,
+                "process_date": process_date,
+                "bucket_name": bucket_name,
+                "region_name": region_name,
+                "dynamo_table_name": dynamo_table_name
+            }
+        },
+    )
+
+    processing_rcv_l0_l1 = GlueJobOperator(
+        task_id="processing_rcv_l0_l1",
+        job_name="huynm43-mp-glue",
+        script_args={
+            "--bucket": bucket_name,
+            "--table": table_name,
+            "--process_date": process_date,
+            "--schema": schema_name
+        },
+        aws_conn_id="aws_default",
+        region_name="us-east-1",
+        wait_for_completion=True,
+        on_failure_callback=job_failure_callback,
+        on_success_callback=job_success_callback,
+    )
+
+    init_dynamo_tracking >> processing_rcv_l0_l1
