@@ -1,6 +1,5 @@
 from datetime import datetime
-
-import pandas as pd
+from pyspark.sql import functions as F
 import numpy as np
 
 
@@ -9,7 +8,7 @@ def transform(context):
     layer = context["layer"]
     config = context["config"]
 
-    if df.empty:
+    if df.isEmpty():
         return df
 
     transformations = config[layer]["transformation"]
@@ -25,9 +24,12 @@ def add_columns(context, transform_rules):
     df = context["df"]
     path = context["file_path"]
 
-    COLUMNS = {"process_date": datetime.now(), "source_file": path}
+    COLUMNS = {"process_date": F.current_timestamp(), "source_file": F.lit(path)}
+    new_columns = dict()
     for column in transform_rules:
-        df[column["name"]] = COLUMNS[column["name"]]
+        new_columns[column["name"]] = COLUMNS[column["name"]]
+
+    df = df.withColumns(new_columns)
 
     return df
 
@@ -39,14 +41,12 @@ def split_customers_address(context, transform_rules):
 
     for rule in transform_rules:
         source = rule["from"]
-        first_col, second_col = rule["to"]
-
-        cleaned_source = df[source].str.strip(" ,").replace("", None)
-
-        splits = cleaned_source.str.rsplit(",", n=1)
-
-        df[first_col] = cleaned_source.replace({np.nan: None})
-        df[second_col] = splits.str[1].str.strip().replace({np.nan: None})
+        address_col, province_col = rule["to"]
+        cleaned = F.trim(F.regexp_replace(F.col(source), r"(^,+)|(,+$)", ""))
+        parts = F.split(cleaned, ",")
+        df = df.withColumn(province_col, F.trim(F.element_at(parts, -1))).withColumn(
+            address_col, F.trim(F.regexp_replace(cleaned, r",\s*[^,]+$", ""))
+        )
 
     return df
 
@@ -58,10 +58,11 @@ def split_customers_name(context, transform_rules):
         source = rule["from"]
         first_col, last_col = rule["to"]
 
-        splits = df[source].str.split(n=1).replace("", None)
+        parts = F.split(F.trim(F.col(source)), r"\s+")
 
-        df[first_col] = splits.str[0].replace({np.nan: None})
-        df[last_col] = splits.str[1].replace({np.nan: None})
+        df = df.withColumn(last_col, F.element_at(parts, -1)).withColumn(
+            first_col, F.regexp_replace(F.col(source), r"\s+\S+$", "")
+        )
 
     return df
 
@@ -73,7 +74,7 @@ def rename_columns(context, transform_rules):
     for rule in transform_rules:
         mapping[rule["from"]] = rule["to"]
 
-    df = df.rename(columns=mapping)
+    df = df.withColumnsRenamed(mapping)
     return df
 
 
@@ -82,8 +83,8 @@ def filter_columns(context, transform_rules):
 
     for rule in transform_rules:
         output_columns = rule["output"]
-        df = df[output_columns]
 
+    df = df.select(output_columns)
     return df
 
 

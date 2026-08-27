@@ -2,11 +2,13 @@ import csv
 import random
 from faker import Faker
 from datetime import datetime, timedelta
+import time
 
 from commons.utils import make_dirs
 
 
 def generate_mock_data(path, prefix, num_records=100):
+    start = time.perf_counter()
     fake = Faker("vi_VN")
 
     customers_path = path + "customers/" + prefix + "/"
@@ -19,7 +21,11 @@ def generate_mock_data(path, prefix, num_records=100):
     make_dirs(province_path)
     make_dirs(orders_path)
 
-    # Province
+    orders_count = num_records
+    customer_count = max(1000, int(orders_count**0.55))
+    product_count = int(customer_count * 1.5)
+
+    # Provinces in Vietnam
     PROVINCES = [
         "Ha Noi",
         "Hai Phong",
@@ -57,137 +63,149 @@ def generate_mock_data(path, prefix, num_records=100):
         "Dien Bien",
     ]
 
-    provinces = []
-    for i in range(1, len(PROVINCES) + 1):
-        provinces.append({"id": f"PROV_{i}", "name": PROVINCES[i - 1]})
-
+    print("Creating Province data")
     with open(f"{province_path}/province.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["id", "name"])
-        writer.writeheader()
-        writer.writerows(provinces)
+        writer = csv.writer(f)
+        writer.writerow(["id", "name"])
+        for i, name in enumerate(PROVINCES, 1):
+            writer.writerow([f"PROV_{i}", name])
+
+    print(f"Province: {time.perf_counter() - start:.3f}s")
 
     # Products
-    products = []
-    for i in range(1, 51):
-        products.append(
-            {
-                "id": f"PROD_{i}",
-                "name": fake.catch_phrase(),
-                "unit_price": round(random.uniform(10.0, 5000.0), 2),
-            }
-        )
+    start = time.perf_counter()
+    print("Creating Products data...")
+    POOL_SIZE = 1000
+    product_name_pool = [fake.catch_phrase() for _ in range(POOL_SIZE)]
+    product_prices = {}
+    product_ids = []
 
     with open(f"{products_path}/products.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["id", "name", "unit_price"])
-        writer.writeheader()
-        writer.writerows(products)
+        writer = csv.writer(f)
+        writer.writerow(["id", "name", "unit_price"])
+        for i in range(1, product_count + 1):
+            product_id = f"PROD_{i}"
+            price = round(random.uniform(10.0, 5000.0), 2)
+
+            product_ids.append(product_id)
+            product_prices[product_id] = price
+
+            writer.writerow(
+                [product_id, f"{random.choice(product_name_pool)}_{i}", price]
+            )
+
+    print(f"Products: {time.perf_counter() - start:.3f}s")
 
     # Customers
-    # Schema: id, name, birthday, address, kpi
-    # Lỗi mô phỏng: kpi > 100, birthday sai định dạng, name null
-    customers = []
-    for i in range(1, num_records + 1):
-        is_error = random.random() < 0.1
+    start = time.perf_counter()
+    print(f"Creating data for {customer_count} Customers...")
+    NAME_POOL_SIZE = 2000
+    STREET_POOL_SIZE = 2000
 
-        c_id = f"CUST_{i}"
-        name = fake.name() if not is_error else ""
+    last_name_pool = [fake.last_name() for _ in range(300)]
+    middle_name_pool = [fake.middle_name() for _ in range(1000)]
+    first_name_pool = [fake.first_name() for _ in range(NAME_POOL_SIZE)]
+    street_pool = [fake.street_name() for _ in range(STREET_POOL_SIZE)]
+    customer_ids = []
 
-        # Lỗi định dạng ngày
-        if is_error and random.choice([True, False]):
-            birthday = fake.date_of_birth(minimum_age=18, maximum_age=80).strftime(
-                "%d-%m-%Y"
-            )
-        else:
-            birthday = fake.date_of_birth(minimum_age=18, maximum_age=80).strftime(
-                "%Y-%m-%d"
-            )
-
-        address = fake.address().replace("\n", ", ")
-
-        address = (
-            address.split(",")[0]
-            + ", "
-            + PROVINCES[random.randint(0, len(PROVINCES) - 1)]
-        )
-
-        # Lỗi range kpi (chuẩn là 0-100)
-        kpi = round(random.uniform(0, 100), 2)
-        if is_error:
-            kpi = round(random.uniform(101, 200), 2)
-
-        customers.append(
-            {
-                "id": c_id,
-                "name": name,
-                "birthday": birthday,
-                "address": address,
-                "kpi": kpi,
-            }
-        )
+    start_birth = datetime(1945, 1, 1)
+    end_birth = datetime(2008, 12, 31)
+    birth_range_days = (end_birth - start_birth).days
 
     with open(
         f"{customers_path}/customers.csv", "w", newline="", encoding="utf-8"
     ) as f:
-        writer = csv.DictWriter(
-            f, fieldnames=["id", "name", "birthday", "address", "kpi"]
-        )
-        writer.writeheader()
-        writer.writerows(customers)
+        writer = csv.writer(f)
+        writer.writerow(["id", "name", "birthday", "address", "kpi"])
+
+        for i in range(1, customer_count + 1):
+            is_error = random.random() < 0.1
+            cust_id = f"CUST_{i}"
+            customer_ids.append(cust_id)
+
+            # Name
+            if is_error:
+                name = ""
+            else:
+                name = f"{random.choice(last_name_pool)} {random.choice(middle_name_pool)} {random.choice(first_name_pool)}"
+
+            # Birthday
+            birthday_dt = start_birth + timedelta(
+                days=random.randint(0, birth_range_days)
+            )
+            if is_error and random.choice([True, False]):
+                birthday = birthday_dt.strftime("%d-%m-%Y")
+            else:
+                birthday = birthday_dt.strftime("%Y-%m-%d")
+
+            # Address
+            address = f"{random.choice(street_pool)}, {random.choice(PROVINCES)}"
+
+            # KPI
+            kpi = round(random.uniform(0, 100), 2)
+            if is_error:
+                kpi = round(random.uniform(101, 200), 2)
+
+            writer.writerow([cust_id, name, birthday, address, kpi])
+
+    print(f"Customers: {time.perf_counter() - start:.3f}s")
 
     # Orders
-    # Schema: id, customer_id, product_id, quantity, price, order_date[cite: 2, 4]
-    # Lỗi mô phỏng: null customer_id, số lượng âm
-    orders = []
-    for i in range(1, num_records * 2 + 1):
-        is_error = random.random() < 0.1
+    start = time.perf_counter()
+    print(f"Creating {orders_count:,} Orders...")
+    base_ts = int(datetime.now().timestamp())
 
-        product = random.choice(products)
-        customer_id = f"CUST_{random.randint(1, num_records)}"
-
-        # Lỗi thiếu khóa ngoại / Not Null
-        if is_error and random.choice([True, False]):
-            customer_id = ""
-
-        # Lỗi range quantity (chuẩn là 0-9999)
-        quantity = random.randint(1, 10)
-        if is_error:
-            quantity = random.randint(-5, 0)
-
-        orders.append(
-            {
-                "id": f"ORD_{i}",
-                "customer_id": customer_id,
-                "product_id": product["id"],
-                "quantity": quantity,
-                "price": product["unit_price"],
-                "order_date": fake.date_time_between(
-                    start_date="-5d", end_date="now"
-                ).strftime("%Y-%m-%d %H:%M:%S"),
-            }
+    date_pool = [
+        datetime.fromtimestamp(base_ts - random.randint(0, 100)).strftime(
+            "%Y-%m-%d %H:%M:%S"
         )
+        for _ in range(1_000)
+    ]
 
     with open(f"{orders_path}/orders.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(
-            f,
-            fieldnames=[
-                "id",
-                "customer_id",
-                "product_id",
-                "quantity",
-                "price",
-                "order_date",
-            ],
+        writer = csv.writer(f)
+        writer.writerow(
+            ["id", "customer_id", "product_id", "quantity", "price", "order_date"]
         )
-        writer.writeheader()
-        writer.writerows(orders)
 
-    print(
-        f"Đã tạo thành công dữ liệu với khoảng {num_records} records chính (có chèn % lỗi)!"
-    )
+        for i in range(1, orders_count + 1):
+            is_error = random.random() < 0.1
+
+            customer_id = random.choice(customer_ids)
+            if is_error and random.choice([True, False]):
+                customer_id = ""
+
+            product_id = random.choice(product_ids)
+
+            quantity = random.randint(1, 10)
+            if is_error:
+                quantity = random.randint(-5, 0)
+
+            random_seconds = random.randint(0, 86400 * 5)
+            order_date = random.choice(date_pool)
+
+            writer.writerow(
+                [
+                    f"ORD_{i}",
+                    customer_id,
+                    product_id,
+                    quantity,
+                    product_prices[product_id],
+                    order_date,
+                ]
+            )
+
+            if i % 100_000 == 0:
+                print(f"  -> Created {i:,} Order rows.")
+        print(f"Orders: {time.perf_counter() - start:.3f}s")
+
+    print(f"\n=> COMPLETED! Created data for {num_records:,} records!")
 
 
+# Test
 if __name__ == "__main__":
-    RECORD_COUNT = 100
+    RECORD_COUNT = 100_000
     DATE = datetime.now().strftime("%Y/%m/%d")
     PATH = "../data/rcv/"
+
     generate_mock_data(path=PATH, num_records=RECORD_COUNT, prefix=DATE)
