@@ -7,7 +7,7 @@ __pycache__/
 venv/
 env/
 ENV/
-.env
+.env*
 
 .pytest_cache/
 .mypy_cache/
@@ -25,3 +25,6 @@ temp/
 
 config/airflow.cfg
 logs/
+
+lambda/
+artifacts/
