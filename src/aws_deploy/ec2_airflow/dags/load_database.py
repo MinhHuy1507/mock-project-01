@@ -4,12 +4,13 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.operators.glue import GlueJobOperator
 from airflow.models.param import Param
 from scripts.utils.configs import (
-    upload_secret_to_s3, delete_secret_from_s3,
+    upload_secret_to_s3,
+    delete_secret_from_s3,
     pg_host,
     pg_port,
     pg_user,
     pg_database,
-    pg_password
+    pg_password,
 )
 
 from scripts.utils.track_job import (
@@ -95,7 +96,7 @@ with DAG(
                 "process_date": process_date,
                 "bucket_name": bucket_name,
                 "region_name": region_name,
-                "dynamo_table_name": dynamo_table_name
+                "dynamo_table_name": dynamo_table_name,
             }
         },
     )

@@ -30,7 +30,7 @@ def get_jdbc_properties(db_config, batch_size):
         "driver": "org.postgresql.Driver",
         "batchsize": str(batch_size),
         "rewriteBatchedInserts": "true",
-        "stringtype": "unspecified"
+        "stringtype": "unspecified",
     }
 
 

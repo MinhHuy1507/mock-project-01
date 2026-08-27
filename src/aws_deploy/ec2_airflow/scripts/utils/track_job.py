@@ -19,7 +19,9 @@ def init_tracking_record(**kwargs):
     bucket_name = params.get("bucket_name")
     region_name = params.get("region_name")
     dynamo_table_name = params.get("dynamo_table_name")
-    source_file = f"s3://{bucket_name}/rcv/{schema_name}/{table_name}/{process_date}/{table_name}"
+    source_file = (
+        f"s3://{bucket_name}/rcv/{schema_name}/{table_name}/{process_date}/{table_name}"
+    )
     start_time = datetime.now().isoformat()
 
     dynamodb = boto3.resource("dynamodb", region_name=region_name)
@@ -79,7 +81,7 @@ def sns_publish(
         response = sns_client.publish(
             TopicArn=sns_topic_arn,
             Subject=f"Airflow Task FAILED: {run_id} - {task_id} - {table_name}",
-            Message=json.dumps(sns_message, indent=2, ensure_ascii=False)
+            Message=json.dumps(sns_message, indent=2, ensure_ascii=False),
         )
         logging.info(
             f"Successfully sent SNS message. MessageId: {response.get('MessageId')}"
@@ -117,12 +119,10 @@ def job_failure_callback(context):
 
     if run_id_match:
         glue_run_id = run_id_match.group(1)
-        glue_job_name = getattr(ti.task, 'job_name', 'UNKNOWN_JOB')
+        glue_job_name = getattr(ti.task, "job_name", "UNKNOWN_JOB")
         try:
             glue_client = boto3.client("glue", region_name=region_name)
-            response = glue_client.get_job_run(
-                JobName=glue_job_name, RunId=glue_run_id
-            )
+            response = glue_client.get_job_run(JobName=glue_job_name, RunId=glue_run_id)
 
             glue_internal_error = response["JobRun"].get("ErrorMessage", "")
 
@@ -152,9 +152,7 @@ def job_failure_callback(context):
                 ":end": end_time,
             },
         )
-        logging.info(
-            f"Updated DynamoDB for table {table_name}, stage: {stage_name}"
-        )
+        logging.info(f"Updated DynamoDB for table {table_name}, stage: {stage_name}")
 
     except Exception as e:
         logging.error(f"Failed to update DynamoDB: {e}", exc_info=True)

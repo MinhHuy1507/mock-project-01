@@ -84,7 +84,7 @@ with DAG(
                 "process_date": process_date,
                 "bucket_name": bucket_name,
                 "region_name": region_name,
-                "dynamo_table_name": dynamo_table_name
+                "dynamo_table_name": dynamo_table_name,
             }
         },
     )
@@ -96,7 +96,7 @@ with DAG(
             "--bucket": bucket_name,
             "--table": table_name,
             "--process_date": process_date,
-            "--schema": schema_name
+            "--schema": schema_name,
         },
         aws_conn_id="aws_default",
         region_name="us-east-1",

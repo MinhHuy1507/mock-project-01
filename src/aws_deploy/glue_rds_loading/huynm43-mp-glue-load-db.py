@@ -60,7 +60,12 @@ def main():
     process_date = args["process_date"]
     pg_password_s3_key = args["pg_password_s3_key"]
 
-    pg_password = utils.get_object(bucket_name, pg_password_s3_key)["Body"].read().decode("utf-8").strip()
+    pg_password = (
+        utils.get_object(bucket_name, pg_password_s3_key)["Body"]
+        .read()
+        .decode("utf-8")
+        .strip()
+    )
 
     db_config = {
         "user": args["pg_username"],
@@ -94,7 +99,9 @@ def main():
 
     try:
         stage_name = "load_database"
-        l1_to_database(bucket_name, table_name, schema_name, process_date, spark, db_config)
+        l1_to_database(
+            bucket_name, table_name, schema_name, process_date, spark, db_config
+        )
 
         status = "SUCCESS"
         end_time = datetime.now().isoformat()

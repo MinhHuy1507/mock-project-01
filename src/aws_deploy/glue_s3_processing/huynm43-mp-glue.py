@@ -91,7 +91,9 @@ def l0_to_l1(schema, table, bucket, process_date, spark):
 
 
 def main():
-    args = getResolvedOptions(sys.argv, ["JOB_NAME", "bucket", "schema", "table", "process_date"])
+    args = getResolvedOptions(
+        sys.argv, ["JOB_NAME", "bucket", "schema", "table", "process_date"]
+    )
 
     bucket = args["bucket"]
     schema_name = args["schema"]
