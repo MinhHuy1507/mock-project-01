@@ -4,3 +4,6 @@ pyarrow
 pytest
 faker
 black
+boto3
+
+snowflake-connector-python

@@ -2,10 +2,16 @@ import os
 from pathlib import Path
 from commons.utils import load_config
 
-DEFAULT_LOCAL_PATH = Path(__file__).resolve().parent.parent.parent / "config"
+REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
+DEFAULT_LOCAL_PATH = REPOSITORY_ROOT / "config"
 CONFIG_BASE_PATH = os.getenv("CONFIG_BASE_PATH", str(DEFAULT_LOCAL_PATH))
+DATA_BASE_PATH = Path(os.getenv("DATA_BASE_PATH", str(REPOSITORY_ROOT / "data")))
 
 global_config = load_config(f"{CONFIG_BASE_PATH}/global.yaml")
+
+for layer in ("rcv", "l0", "l1", "error_records"):
+    global_config["path"][layer] = f"{DATA_BASE_PATH / layer}{os.sep}"
+
 customers_config = load_config(f"{CONFIG_BASE_PATH}/schemas/customers.yaml")
 products_config = load_config(f"{CONFIG_BASE_PATH}/schemas/products.yaml")
 province_config = load_config(f"{CONFIG_BASE_PATH}/schemas/province.yaml")

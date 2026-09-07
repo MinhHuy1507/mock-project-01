@@ -206,6 +206,6 @@ def generate_mock_data(path, prefix, num_records=100):
 if __name__ == "__main__":
     RECORD_COUNT = 100_000
     DATE = datetime.now().strftime("%Y/%m/%d")
-    PATH = "../data/rcv/"
+    PATH = "../../../data/rcv/"
 
     generate_mock_data(path=PATH, num_records=RECORD_COUNT, prefix=DATE)

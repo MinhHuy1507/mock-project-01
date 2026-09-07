@@ -12,6 +12,10 @@ l0_layer: l0
 l1_layer: l1
 audit_layer: audit
 
+stage_l0: stage_l0
+stage_l1: stage_l1
+stage_audit: stage_audit
+
 columns:
 - name: id
   type: string
@@ -19,6 +23,7 @@ columns:
   type: string
 - name: birthday
   type: date
+  format: YYYY-MM-DD
 - name: address
   type: string
 - name: kpi
@@ -40,9 +45,6 @@ l0_to_l1:
   validation:
     - rule: not_null
       column: [id, name, birthday, address, kpi]
-    - rule: format
-      column: birthday
-      format: yyyy-MM-dd
     - rule: range
       column: kpi
       min: 0
@@ -59,7 +61,7 @@ l0_to_l1:
         to: [address, address_province]
     rename:
       - from: id
-        to: customer_id 
+        to: customer_id
     filter_columns:
       - output: [customer_id, first_name, last_name, birthday, address, address_province, kpi, process_date, source_file]
 

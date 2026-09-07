@@ -12,6 +12,10 @@ l0_layer: l0
 l1_layer: l1
 audit_layer: audit
 
+stage_l0: stage_l0
+stage_l1: stage_l1
+stage_audit: stage_audit
+
 columns:
 - name: id
   type: string
